@@ -128,14 +128,14 @@ def get_synth_input_fn(height, width, num_channels, num_classes):
   return input_fn
 
 
-def build_tensor_serving_input_receiver_fn(parse_record_fn):
+def build_tensor_serving_input_receiver_fn(parse_for_serving_fn, batch_size=1):
   """Returns a input_receiver_fn that can be used during serving.
 
   Note that this expects a single image to come in as serialized tf.Example; it
   will be parsed for use by the model in the returned function.
 
   Args:
-    parse_record_fn: A function that takes a raw record and returns the
+    parse_for_serving_fn: A function that takes a raw record and returns the
       corresponding image for prediction.
 
   Returns:
@@ -143,12 +143,13 @@ def build_tensor_serving_input_receiver_fn(parse_record_fn):
   """
   def serving_input_receiver_fn():
     # Prep a placeholder where the input example will be fed in
-    example_serialized = tf.placeholder(dtype=tf.string, name='input_tensor')
+    examples_serialized = tf.placeholder(
+        dtype=tf.string, shape=[batch_size], name='input_tensor')
 
     # The serialized input will be parsed into a preprocessed float image
-    parsed_example = parse_record_fn(example_serialized)
+    parsed_examples = parse_for_serving_fn(examples_serialized)
     return tf.estimator.export.TensorServingInputReceiver(
-        features=parsed_example, receiver_tensors=example_serialized)
+        features=parsed_examples, receiver_tensors=examples_serialized)
 
   return serving_input_receiver_fn
 
