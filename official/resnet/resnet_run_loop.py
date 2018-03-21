@@ -244,7 +244,13 @@ def resnet_model_fn(features, labels, mode, model_class,
   }
 
   if mode == tf.estimator.ModeKeys.PREDICT:
-    return tf.estimator.EstimatorSpec(mode=mode, predictions=predictions)
+    # Return the predictions and the specification for serving a SavedModel
+    return tf.estimator.EstimatorSpec(
+        mode=mode,
+        predictions=predictions,
+        export_outputs={
+            'predict': tf.estimator.export.PredictOutput(predictions)
+        })
 
   # Calculate loss, which includes softmax cross entropy and L2 regularization.
   cross_entropy = tf.losses.softmax_cross_entropy(
