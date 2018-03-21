@@ -145,7 +145,7 @@ def build_tensor_serving_input_receiver_fn(parse_record_fn, batch_size=1):
   def serving_input_receiver_fn():
     # Prep a placeholder where the input example will be fed in
     serialized_tf_example = tf.placeholder(
-        dtype=tf.string, shape=[batch_size], name='input_tensor')
+        dtype=tf.string, shape=[batch_size, 1], name='input_tensor')
     # The serialized input will be parsed into preprocessed floats
     parsed_example = parse_record_fn(serialized_tf_example, is_training=False)
     return tf.export.TensorServingInputReceiver(
