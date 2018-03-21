@@ -112,7 +112,8 @@ class BaseTest(tf.test.TestCase):
 
       expected_dtype = tf.float16 if use_fp16 else tf.float32
       tensors_to_check = ('initial_conv:0', 'block_layer1:0', 'block_layer2:0',
-                          'block_layer3:0', 'final_avg_pool:0', 'final_dense:0')
+                          'block_layer3:0', 'final_reduce_mean:0',
+                          'final_dense:0')
 
       for tensor_name in tensors_to_check:
         tensor = g.get_tensor_by_name('resnet_model/' + tensor_name)
