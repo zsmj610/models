@@ -136,19 +136,19 @@ def build_tensor_serving_input_receiver_fn(parse_record_fn):
 
   Args:
     parse_record_fn: A function that takes a raw record and returns the
-      corresponding (image, label) pair.
+      corresponding image for prediction.
 
   Returns:
     A function that itself returns a TensorServingInputReceiver.
   """
   def serving_input_receiver_fn():
     # Prep a placeholder where the input example will be fed in
-    serialized_tf_example = tf.placeholder(dtype=tf.string, name='input_tensor')
+    example_serialized = tf.placeholder(dtype=tf.string, name='input_tensor')
 
-    # The serialized input will be parsed into preprocessed floats
-    parsed_example = parse_record_fn(serialized_tf_example, is_training=False)
+    # The serialized input will be parsed into a preprocessed float image
+    parsed_example = parse_record_fn(example_serialized)
     return tf.estimator.export.TensorServingInputReceiver(
-        features=parsed_example, receiver_tensors=serialized_tf_example)
+        features=parsed_example, receiver_tensors=example_serialized)
 
   return serving_input_receiver_fn
 
