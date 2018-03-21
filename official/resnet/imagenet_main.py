@@ -26,7 +26,6 @@ import tensorflow as tf  # pylint: disable=g-bad-import-order
 from official.resnet import imagenet_preprocessing
 from official.resnet import resnet_model
 from official.resnet import resnet_run_loop
-from official.utils.export import export_model
 
 _DEFAULT_IMAGE_SIZE = 224
 _NUM_CHANNELS = 3
@@ -315,7 +314,7 @@ def main(argv):
   if flags.export_dir is not None:
     shape = [_DEFAULT_IMAGE_SIZE, _DEFAULT_IMAGE_SIZE, _NUM_CHANNELS]
     input_receiver_fn = resnet_run_loop.build_tensor_serving_input_receiver_fn(
-      shape)
+        shape)
     classifier.export_savedmodel(flags.export_dir, input_receiver_fn)
 
 if __name__ == '__main__':
