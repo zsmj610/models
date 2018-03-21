@@ -196,15 +196,10 @@ def get_synth_input_fn():
       _DEFAULT_IMAGE_SIZE, _DEFAULT_IMAGE_SIZE, _NUM_CHANNELS, _NUM_CLASSES)
 
 
-def parse_simgle_image(example_serialized):
-  feature_map = {
-      'image/encoded': tf.FixedLenFeature([], dtype=tf.string, default_value='')
-  }
-
-  image_buffer = tf.parse_single_example(example_serialized, feature_map)
+def parse_single_image(example_serialized):
 
   image = imagenet_preprocessing.preprocess_image(
-      image_buffer=image_buffer,
+      image_buffer=example_serialized,
       bbox=None,
       output_height=_DEFAULT_IMAGE_SIZE,
       output_width=_DEFAULT_IMAGE_SIZE,
@@ -331,7 +326,7 @@ def main(argv):
   # Export the model if desired
   if flags.export_dir is not None:
     resnet_run_loop.export_model(
-        classifier, flags.export_dir, parse_simgle_image)
+        classifier, flags.export_dir, parse_single_image)
 
 if __name__ == '__main__':
   tf.logging.set_verbosity(tf.logging.INFO)
