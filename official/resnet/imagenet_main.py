@@ -196,18 +196,15 @@ def get_synth_input_fn():
       _DEFAULT_IMAGE_SIZE, _DEFAULT_IMAGE_SIZE, _NUM_CHANNELS, _NUM_CLASSES)
 
 
-def parse_for_serving(examples):
+def parse_for_serving(image_buffer):
 
-  def process_single_example(example_serialized):
-    return imagenet_preprocessing.preprocess_image(
-        image_buffer=example_serialized,
-        bbox=None,
-        output_height=_DEFAULT_IMAGE_SIZE,
-        output_width=_DEFAULT_IMAGE_SIZE,
-        num_channels=_NUM_CHANNELS,
-        is_training=False)
-
-  return tf.map_fn(process_single_example, examples)
+  return imagenet_preprocessing.preprocess_image(
+      image_buffer=image_buffer,
+      bbox=None,
+      output_height=_DEFAULT_IMAGE_SIZE,
+      output_width=_DEFAULT_IMAGE_SIZE,
+      num_channels=_NUM_CHANNELS,
+      is_training=False)
 
 
 ###############################################################################
@@ -326,8 +323,8 @@ def main(argv):
 
   # Export the model if desired
   if flags.export_dir is not None:
-    resnet_run_loop.export_model(
-        classifier, flags.export_dir, parse_for_serving)
+    shape = [_DEFAULT_IMAGE_SIZE, _DEFAULT_IMAGE_SIZE, _NUM_CHANNELS]
+    resnet_run_loop.export_model(classifier, flags.export_dir, shape)
 
 if __name__ == '__main__':
   tf.logging.set_verbosity(tf.logging.INFO)

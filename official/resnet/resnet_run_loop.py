@@ -128,7 +128,7 @@ def get_synth_input_fn(height, width, num_channels, num_classes):
   return input_fn
 
 
-def build_tensor_serving_input_receiver_fn(parse_for_serving_fn, batch_size=1):
+def build_tensor_serving_input_receiver_fn(shape, batch_size=1):
   """Returns a input_receiver_fn that can be used during serving.
 
   Note that this expects a single image to come in as serialized tf.Example; it
@@ -143,13 +143,11 @@ def build_tensor_serving_input_receiver_fn(parse_for_serving_fn, batch_size=1):
   """
   def serving_input_receiver_fn():
     # Prep a placeholder where the input example will be fed in
-    examples_serialized = tf.placeholder(
-        dtype=tf.string, shape=[batch_size], name='input_tensor')
+    processed_image = tf.placeholder(
+        dtype=tf.float32, shape=[batch_size] + shape, name='input_tensor')
 
-    # The serialized input will be parsed into a preprocessed float image
-    parsed_examples = parse_for_serving_fn(examples_serialized)
     return tf.estimator.export.TensorServingInputReceiver(
-        features=parsed_examples, receiver_tensors=examples_serialized)
+        features=processed_image, receiver_tensors=processed_image)
 
   return serving_input_receiver_fn
 
@@ -424,7 +422,7 @@ def resnet_main(flags, model_function, input_function):
     return classifier
 
 
-def export_model(estimator, export_dir, parse_record_fn):
+def export_model(estimator, export_dir, shape):
   """Exports a model to the specified directory.
 
   Args:
@@ -442,7 +440,7 @@ def export_model(estimator, export_dir, parse_record_fn):
   if export_dir is None:
     raise ValueError('An export_dir must be passed in to export a model.')
 
-  input_receiver_fn = build_tensor_serving_input_receiver_fn(parse_record_fn)
+  input_receiver_fn = build_tensor_serving_input_receiver_fn(shape)
   estimator.export_savedmodel(export_dir, input_receiver_fn)
 
   return estimator
