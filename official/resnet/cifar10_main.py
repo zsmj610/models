@@ -228,7 +228,12 @@ def main(argv):
   flags = parser.parse_args(args=argv[1:])
 
   input_function = flags.use_synthetic_data and get_synth_input_fn() or input_fn
-  resnet_run_loop.resnet_main(flags, cifar10_model_fn, input_function)
+  classifier = resnet_run_loop.resnet_main(
+      flags, cifar10_model_fn, input_function)
+
+  # Export the model if desired
+  if flags.export_dir is not None:
+    resnet_run_loop.export_model(classifier, flags.export_dir, parse_record)
 
 
 if __name__ == '__main__':

@@ -128,6 +128,32 @@ def get_synth_input_fn(height, width, num_channels, num_classes):
   return input_fn
 
 
+def build_tensor_serving_input_receiver_fn(parse_record_fn, batch_size=1):
+  """Returns a input_receiver_fn that can be used during serving.
+
+  Note that this expects images to come in as serialized tf.Examples; they
+  will be parsed for use by the model here.
+
+  Args:
+    parse_record_fn: A function that takes a raw record and returns the
+      corresponding (image, label) pair.
+    batch_size: Number of served examples expected at a time.
+
+  Returns:
+    A function that itself returns a TensorServingInputReceiver.
+  """
+  def serving_input_receiver_fn():
+    # Prep a placeholder where the input example will be fed in
+    serialized_tf_example = tf.placeholder(
+        dtype=tf.string, shape=[batch_size], name='input_tensor')
+    # The serialized input will be parsed into preprocessed floats
+    parsed_example = parse_record_fn(serialized_tf_example, is_training=False)
+    return tf.export.TensorServingInputReceiver(
+        features=parsed_example, receiver_tensors=serialized_tf_example)
+
+  return serving_input_receiver_fn
+
+
 ################################################################################
 # Functions for running training/eval/validation loops for the model.
 ################################################################################
@@ -308,7 +334,21 @@ def validate_batch_size_for_multi_gpu(batch_size):
 
 
 def resnet_main(flags, model_function, input_function):
-  """Shared main loop for ResNet Models."""
+  """Shared main loop for ResNet Models.
+
+  Args:
+    flags: FLAGS object that contains the params for running. See
+      ResnetArgParser for created flags.
+    model_function: the function that instantiates the Model and builds the
+      ops for train/eval. This will be passed directly into the estimator.
+    input_function: the function that processes the dataset and returns a
+      dataset that the estimator can train on. This will be wrapped with
+      all the relevant flags for running and passed to estimator.
+
+  Returns:
+    The estimator after training and evaluating for the specified number of
+    epochs.
+  """
 
   # Using the Winograd non-fused algorithms provides a small performance boost.
   os.environ['TF_ENABLE_WINOGRAD_NONFUSED'] = '1'
@@ -375,6 +415,32 @@ def resnet_main(flags, model_function, input_function):
                                        steps=flags.max_train_steps)
     print(eval_results)
 
+    return classifier
+
+
+def export_model(estimator, export_dir, parse_record_fn):
+  """Exports a model to the specified directory.
+
+  Args:
+    estimator: a trained instance of tf.estimator.Estimator for exporting.
+    export_dir: String path to the target directory for export.
+    parse_record_fn: A function that takes a raw record and returns the
+      corresponding (image, label) pair.
+
+  Returns:
+    The estimator in question.
+
+  Raises:
+    ValueError: if export_dir is None.
+  """
+  if export_dir is None:
+    raise ValueError('An export_dir must be passed in to export a model.')
+
+  input_receiver_fn = build_tensor_serving_input_receiver_fn(parse_record_fn)
+  estimator.export_savedmodel(export_dir, input_receiver_fn)
+
+  return estimator
+
 
 class ResnetArgParser(argparse.ArgumentParser):
   """Arguments for configuring and running a Resnet Model.
@@ -385,6 +451,7 @@ class ResnetArgParser(argparse.ArgumentParser):
         parsers.BaseParser(),
         parsers.PerformanceParser(),
         parsers.ImageModelParser(),
+        parsers.ExportParser(),
     ])
 
     self.add_argument(
