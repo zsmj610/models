@@ -128,30 +128,6 @@ def get_synth_input_fn(height, width, num_channels, num_classes):
   return input_fn
 
 
-def build_tensor_serving_input_receiver_fn(shape, batch_size=1):
-  """Returns a input_receiver_fn that can be used during serving.
-
-  Note that this expects a single image to come in as serialized tf.Example; it
-  will be parsed for use by the model in the returned function.
-
-  Args:
-    parse_for_serving_fn: A function that takes a raw record and returns the
-      corresponding image for prediction.
-
-  Returns:
-    A function that itself returns a TensorServingInputReceiver.
-  """
-  def serving_input_receiver_fn():
-    # Prep a placeholder where the input example will be fed in
-    processed_image = tf.placeholder(
-        dtype=tf.float32, shape=[batch_size] + shape, name='input_tensor')
-
-    return tf.estimator.export.TensorServingInputReceiver(
-        features=processed_image, receiver_tensors=processed_image)
-
-  return serving_input_receiver_fn
-
-
 ################################################################################
 # Functions for running training/eval/validation loops for the model.
 ################################################################################
@@ -420,30 +396,6 @@ def resnet_main(flags, model_function, input_function):
     print(eval_results)
 
     return classifier
-
-
-def export_model(estimator, export_dir, shape):
-  """Exports a model to the specified directory.
-
-  Args:
-    estimator: a trained instance of tf.estimator.Estimator for exporting.
-    export_dir: String path to the target directory for export.
-    parse_record_fn: A function that takes a raw record and returns the
-      corresponding (image, label) pair.
-
-  Returns:
-    The estimator in question.
-
-  Raises:
-    ValueError: if export_dir is None.
-  """
-  if export_dir is None:
-    raise ValueError('An export_dir must be passed in to export a model.')
-
-  input_receiver_fn = build_tensor_serving_input_receiver_fn(shape)
-  estimator.export_savedmodel(export_dir, input_receiver_fn)
-
-  return estimator
 
 
 class ResnetArgParser(argparse.ArgumentParser):

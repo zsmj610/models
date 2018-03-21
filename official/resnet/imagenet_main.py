@@ -196,17 +196,6 @@ def get_synth_input_fn():
       _DEFAULT_IMAGE_SIZE, _DEFAULT_IMAGE_SIZE, _NUM_CHANNELS, _NUM_CLASSES)
 
 
-def parse_for_serving(image_buffer):
-
-  return imagenet_preprocessing.preprocess_image(
-      image_buffer=image_buffer,
-      bbox=None,
-      output_height=_DEFAULT_IMAGE_SIZE,
-      output_width=_DEFAULT_IMAGE_SIZE,
-      num_channels=_NUM_CHANNELS,
-      is_training=False)
-
-
 ###############################################################################
 # Running the model
 ###############################################################################
