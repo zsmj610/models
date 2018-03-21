@@ -327,7 +327,7 @@ def main(argv):
   # Export the model if desired
   if flags.export_dir is not None:
     resnet_run_loop.export_model(
-        classifier, flags.export_dir, parse_single_image)
+        classifier, flags.export_dir, parse_for_serving)
 
 if __name__ == '__main__':
   tf.logging.set_verbosity(tf.logging.INFO)
