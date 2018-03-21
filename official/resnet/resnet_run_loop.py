@@ -147,7 +147,7 @@ def build_tensor_serving_input_receiver_fn(parse_record_fn):
 
     # The serialized input will be parsed into preprocessed floats
     parsed_example = parse_record_fn(serialized_tf_example, is_training=False)
-    return tf.export.TensorServingInputReceiver(
+    return tf.estimator.export.TensorServingInputReceiver(
         features=parsed_example, receiver_tensors=serialized_tf_example)
 
   return serving_input_receiver_fn
